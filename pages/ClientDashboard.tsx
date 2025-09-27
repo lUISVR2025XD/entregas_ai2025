@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Profile, Order, OrderStatus, CartItem, Business, Location, Product, UserRole, FilterState } from '../types';
+import { Profile, Order, OrderStatus, CartItem, Business, Location, Product, UserRole, FilterState, Notification } from '../types';
 import OrderTrackingMap from '../components/maps/OrderTrackingMap';
 import { APP_NAME, ORDER_STATUS_MAP, MOCK_USER_LOCATION, QUICK_MESSAGES_CLIENT } from '../constants';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import StarRating from '../components/ui/StarRating';
-import { MapPin, Bike, Clock, CheckCircle, Search, Frown, ShoppingBag, Check, ClipboardList, MessageSquare } from 'lucide-react';
+import { MapPin, Bike, Clock, CheckCircle, Search, Frown, ShoppingBag, Check, ClipboardList, MessageSquare, ThumbsUp, UtensilsCrossed, PackageCheck } from 'lucide-react';
 import DashboardHeader from '../components/shared/DashboardHeader';
 import ShoppingCart from '../components/client/ShoppingCart';
 import BusinessCard from '../components/client/BusinessCard';
@@ -36,9 +36,9 @@ const MOCK_POPULAR_PRODUCTS: Product[] = [
 ];
 
 const MOCK_PAST_ORDERS: Order[] = [
-    { id: 'order-past-1', client_id: 'client-1', business_id: 'b2', total_price: 120, status: OrderStatus.DELIVERED, created_at: new Date(Date.now() - 86400000 * 2).toISOString(), items:[], delivery_location: {lat: 0, lng: 0}, delivery_address: '', business: { id: 'b2', name: 'Sushi Express', location: { lat: 19.4350, lng: -99.1400 }, category: 'Japonesa', delivery_fee: 0, delivery_time: '30-40 min', image: '', is_open: true, phone: '', address: '', email: '', rating: 4.6 }},
-    { id: 'order-past-2', client_id: 'client-1', business_id: 'b4', total_price: 190, status: OrderStatus.DELIVERED, created_at: new Date(Date.now() - 86400000).toISOString(), items:[], delivery_location: {lat: 0, lng: 0}, delivery_address: '', business: { id: 'b4', name: 'Burger Joint', location: { lat: 19.4380, lng: -99.1310 }, category: 'Americana', delivery_fee: 40, delivery_time: '35-45 min', image: '', is_open: true, phone: '', address: '', email: '', rating: 4.5 }},
-    { id: 'order-past-3', client_id: 'client-1', business_id: 'b1', total_price: 90, status: OrderStatus.CANCELLED, created_at: new Date(Date.now() - 3600000 * 5).toISOString(), items:[], delivery_location: {lat: 0, lng: 0}, delivery_address: '', business: { id: 'b1', name: 'Taquería El Pastor', location: { lat: 19.4300, lng: -99.1300 }, category: 'Mexicana', delivery_fee: 30, delivery_time: '25-35 min', image: '', is_open: true, phone: '', address: '', email: '', rating: 4.8 }},
+    { id: 'order-past-1', client_id: 'client-1', business_id: 'b2', total_price: 120, status: OrderStatus.DELIVERED, created_at: new Date(Date.now() - 86400000 * 2).toISOString(), items:[], delivery_location: {lat: 0, lng: 0}, delivery_address: '', business: { id: 'b2', name: 'Sushi Express', location: { lat: 19.4350, lng: -99.1400 }, category: 'Japonesa', delivery_fee: 0, delivery_time: '30-40 min', image: 'https://picsum.photos/seed/sushi/400/300', is_open: true, phone: '', address: '', email: '', rating: 4.6 }},
+    { id: 'order-past-2', client_id: 'client-1', business_id: 'b4', total_price: 190, status: OrderStatus.DELIVERED, created_at: new Date(Date.now() - 86400000).toISOString(), items:[], delivery_location: {lat: 0, lng: 0}, delivery_address: '', business: { id: 'b4', name: 'Burger Joint', location: { lat: 19.4380, lng: -99.1310 }, category: 'Americana', delivery_fee: 40, delivery_time: '35-45 min', image: 'https://picsum.photos/seed/burger/400/300', is_open: true, phone: '', address: '', email: '', rating: 4.5 }},
+    { id: 'order-past-3', client_id: 'client-1', business_id: 'b1', total_price: 90, status: OrderStatus.CANCELLED, created_at: new Date(Date.now() - 3600000 * 5).toISOString(), items:[], delivery_location: {lat: 0, lng: 0}, delivery_address: '', business: { id: 'b1', name: 'Taquería El Pastor', location: { lat: 19.4300, lng: -99.1300 }, category: 'Mexicana', delivery_fee: 30, delivery_time: '25-35 min', image: 'https://picsum.photos/seed/tacos/400/300', is_open: true, phone: '', address: '', email: '', rating: 4.8 }},
 ];
 
 interface ClientDashboardProps {
@@ -144,7 +144,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user, onLogout }) => 
         if (currentView === 'tracking' && activeOrder && activeOrder.status === OrderStatus.ON_THE_WAY && deliveryLocation) {
             const interval = setInterval(() => {
                 setDeliveryLocation(prev => {
-                    if(!prev) return prev;
+                    if(!prev || !activeOrder) return prev;
                     // Move the delivery person 20% closer to the client with each tick for a more dynamic feel.
                     const newLat = prev.lat + (activeOrder.delivery_location.lat - prev.lat) * 0.2;
                     const newLng = prev.lng + (activeOrder.delivery_location.lng - prev.lng) * 0.2;
@@ -155,7 +155,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user, onLogout }) => 
                     if(dist < 0.0001) { // Threshold for arrival
                          const finalOrderState = {...activeOrder, status: OrderStatus.DELIVERED};
                          setActiveOrder(finalOrderState);
-                         setPastOrders(prev => prev.map(o => o.id === finalOrderState.id ? finalOrderState : o));
+                         setPastOrders(prevPast => prevPast.map(o => o.id === finalOrderState.id ? finalOrderState : o));
                          notificationService.sendNotification({
                             id: `note-${Date.now()}`,
                             role: UserRole.CLIENT,
@@ -174,6 +174,49 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user, onLogout }) => 
             return () => clearInterval(interval);
         }
     }, [activeOrder, currentView, deliveryLocation]);
+    
+    useEffect(() => {
+        const handleNotification = (notification: Notification) => {
+            if (!notification.orderId || notification.role !== user.role) {
+                return;
+            }
+
+            let newStatus: OrderStatus | null = null;
+            if (notification.title === 'Pedido Confirmado') {
+                newStatus = OrderStatus.IN_PREPARATION;
+            } else if (notification.title === '¡Tu pedido está en camino!') {
+                newStatus = OrderStatus.ON_THE_WAY;
+            }
+
+            if (newStatus) {
+                setPastOrders(currentOrders => {
+                    const orderIndex = currentOrders.findIndex(o => o.id === notification.orderId);
+                    if (orderIndex === -1) {
+                        return currentOrders; // Order not found, no change
+                    }
+
+                    const updatedOrder = { ...currentOrders[orderIndex], status: newStatus as OrderStatus };
+
+                    // This is the core logic for the user's request.
+                    // When the order is on its way, we set it as the active order
+                    // and switch the view to tracking.
+                    if (newStatus === OrderStatus.ON_THE_WAY) {
+                        setActiveOrder(updatedOrder);
+                        setDeliveryLocation(updatedOrder.business?.location); // Start delivery person at the business
+                        setCurrentView('tracking');
+                    }
+                    
+                    const newOrders = [...currentOrders];
+                    newOrders[orderIndex] = updatedOrder;
+                    return newOrders;
+                });
+            }
+        };
+
+        const unsubscribe = notificationService.subscribe(handleNotification);
+        return () => unsubscribe();
+    }, [user.role]);
+
 
     const handleRateOrder = () => {
         alert("¡Gracias por tu calificación!");
@@ -251,7 +294,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user, onLogout }) => 
         setPastOrders(prev => [newOrder, ...prev]);
 
         notificationService.sendNotification({
-            id: `note-${Date.now()}`,
+            id: `note-new-order-${Date.now()}`,
             role: UserRole.BUSINESS,
             orderId: newOrder.id,
             title: '¡Nuevo Pedido!',
@@ -260,34 +303,15 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user, onLogout }) => 
             icon: ShoppingBag
         });
         
-        setTimeout(() => {
-            notificationService.sendNotification({
-                id: `note-${Date.now()}-accepted`,
-                role: UserRole.CLIENT,
-                orderId: newOrder.id,
-                title: 'Pedido Aceptado',
-                message: `¡${newOrder.business?.name} está preparando tu comida!`,
-                type: 'info',
-                icon: Check
-            });
-        }, 3000);
-
-        setTimeout(() => {
-            const orderOnTheWay = {...newOrder, status: OrderStatus.ON_THE_WAY };
-            setActiveOrder(orderOnTheWay);
-            setPastOrders(prev => prev.map(o => o.id === orderOnTheWay.id ? orderOnTheWay : o));
-            setDeliveryLocation(newOrder.business?.location);
-            setCurrentView('tracking');
-            notificationService.sendNotification({
-                id: `note-${Date.now()}-onway`,
-                role: UserRole.CLIENT,
-                orderId: newOrder.id,
-                title: '¡Tu pedido está en camino!',
-                message: 'Un repartidor ha recogido tu pedido y va en camino.',
-                type: 'info',
-                icon: Bike
-            });
-        }, 5000); 
+        notificationService.sendNotification({
+            id: `note-placed-${Date.now()}`,
+            role: UserRole.CLIENT,
+            orderId: newOrder.id,
+            title: 'Pedido Realizado',
+            message: `Tu pedido a ${cartBusiness.name} ha sido enviado. Esperando confirmación.`,
+            type: 'info',
+            icon: Check
+        });
         
         setCart([]);
         setCartBusiness(null);
@@ -337,18 +361,49 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user, onLogout }) => 
     const renderOrderStatus = () => {
         if (!activeOrder) return null;
         const statusInfo = ORDER_STATUS_MAP[activeOrder.status];
+        
+        const steps = [
+            {status: OrderStatus.ACCEPTED, label: 'Confirmado', icon: ThumbsUp},
+            {status: OrderStatus.IN_PREPARATION, label: 'Preparando', icon: UtensilsCrossed},
+            {status: OrderStatus.ON_THE_WAY, label: 'En Camino', icon: Bike},
+            {status: OrderStatus.DELIVERED, label: 'Entregado', icon: PackageCheck},
+        ];
+
+        const getStepIndex = (status: OrderStatus) => {
+             if (status === OrderStatus.READY_FOR_PICKUP) return 2; // Part of "En Camino" stage
+             const index = steps.findIndex(s => s.status === status);
+             if (index !== -1) return index;
+             if ([OrderStatus.PENDING].includes(status)) return -1;
+             return 0; // Default to first step if accepted but not in prep
+        }
+
+        const currentStepIndex = getStepIndex(activeOrder.status);
+
         return (
              <Card className="p-6">
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start mb-6">
                     <div>
                         <h3 className="text-2xl font-bold">Tu pedido de <span className="text-orange-500">{activeOrder.business?.name}</span></h3>
                         <p className="text-gray-500 dark:text-gray-400">ID del Pedido: {activeOrder.id.slice(-6)}</p>
                     </div>
                     <div className={`px-4 py-2 rounded-full text-white font-semibold ${statusInfo.color}`}>{statusInfo.text}</div>
                 </div>
-                <div className="mt-6 flex items-center space-x-8 text-lg">
-                    <div className="flex items-center"><Clock className="w-6 h-6 mr-2 text-orange-500"/><span>Hora estimada: <span className="font-bold">25-30 min</span></span></div>
-                    <div className="flex items-center"><Bike className="w-6 h-6 mr-2 text-orange-500"/><span>Repartidor: <span className="font-bold">{activeOrder.delivery_person?.name}</span></span></div>
+
+                {/* Stepper */}
+                <div className="flex items-center mb-6">
+                    {steps.map((step, index) => (
+                        <React.Fragment key={step.status}>
+                            <div className="flex flex-col items-center text-center">
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${index <= currentStepIndex ? 'bg-orange-500 text-white border-orange-500' : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-500 text-gray-400 dark:text-gray-500'}`}>
+                                    <step.icon size={24} />
+                                </div>
+                                <p className={`mt-2 w-20 text-xs sm:text-sm font-medium transition-colors duration-300 ${index <= currentStepIndex ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'}`}>{step.label}</p>
+                            </div>
+                            {index < steps.length - 1 && (
+                                <div className={`flex-1 h-1 mx-1 sm:mx-2 transition-colors duration-500 ${index < currentStepIndex ? 'bg-orange-500' : 'bg-gray-200 dark:bg-gray-700'}`}></div>
+                            )}
+                        </React.Fragment>
+                    ))}
                 </div>
                 
                  {activeOrder.status === OrderStatus.DELIVERED && (

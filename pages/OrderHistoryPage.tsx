@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Order, OrderStatus } from '../types';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { ORDER_STATUS_MAP } from '../constants';
-import { ChevronLeft, Package, Calendar, Tag } from 'lucide-react';
+import { ChevronLeft, RefreshCw } from 'lucide-react';
 
 interface OrderHistoryPageProps {
     orders: Order[];
@@ -37,28 +36,41 @@ const OrderHistoryPage: React.FC<OrderHistoryPageProps> = ({ orders, onTrackOrde
                     {orders.map(order => {
                         const statusInfo = ORDER_STATUS_MAP[order.status];
                         return (
-                            <Card key={order.id} className="p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                <div className="flex-grow">
-                                    <div className="flex items-center mb-2">
-                                        <span className={`px-3 py-1 rounded-full text-white text-sm font-semibold ${statusInfo.color}`}>{statusInfo.text}</span>
-                                        <h3 className="text-xl font-bold ml-4">{order.business?.name}</h3>
+                             <Card key={order.id} className="overflow-hidden shadow-md transition-shadow hover:shadow-lg flex flex-col sm:flex-row">
+                                {order.business?.image && (
+                                    <img src={order.business.image} alt={order.business.name} className="w-full sm:w-40 h-40 sm:h-auto object-cover" />
+                                )}
+                                <div className="p-4 flex flex-col flex-grow">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h3 className="text-xl font-bold">{order.business?.name}</h3>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                {new Date(order.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                            </p>
+                                        </div>
+                                        <span className={`px-3 py-1 rounded-full text-white text-xs font-semibold ${statusInfo.color}`}>{statusInfo.text}</span>
                                     </div>
-                                    <div className="flex flex-wrap items-center text-sm text-gray-500 dark:text-gray-400 gap-x-4 gap-y-1">
-                                       <span className="flex items-center"><Package className="w-4 h-4 mr-1.5"/>ID: #{order.id.slice(-6)}</span>
-                                       <span className="flex items-center"><Calendar className="w-4 h-4 mr-1.5"/>{new Date(order.created_at).toLocaleDateString()}</span>
-                                       <span className="flex items-center"><Tag className="w-4 h-4 mr-1.5"/>${order.total_price.toFixed(2)}</span>
+                                    
+                                    <div className="flex justify-between items-baseline border-t dark:border-gray-700 pt-2 mt-2">
+                                        <span className="text-sm text-gray-500 dark:text-gray-400">ID: #{order.id.slice(-6)}</span>
+                                        <span className="text-lg font-bold">Total: ${order.total_price.toFixed(2)}</span>
                                     </div>
-                                </div>
-                                <div className="flex-shrink-0 w-full md:w-auto">
-                                    {isTrackable(order.status) ? (
-                                        <Button onClick={() => onTrackOrder(order)} className="w-full">
-                                            Seguir Pedido
+                                    
+                                    <div className="mt-4 pt-4 border-t dark:border-gray-700 flex flex-col sm:flex-row gap-2 sm:justify-end">
+                                        {isTrackable(order.status) ? (
+                                            <Button onClick={() => onTrackOrder(order)} className="w-full sm:w-auto">
+                                                Seguir Pedido
+                                            </Button>
+                                        ) : (
+                                            <Button variant="secondary" className="w-full sm:w-auto" disabled={order.status === OrderStatus.CANCELLED}>
+                                                Ver Recibo
+                                            </Button>
+                                        )}
+                                        <Button variant="secondary" className="w-full sm:w-auto flex items-center justify-center">
+                                            <RefreshCw className="w-4 h-4 mr-2" />
+                                            Volver a Pedir
                                         </Button>
-                                    ) : (
-                                         <Button variant="secondary" className="w-full" disabled>
-                                            Ver Detalles
-                                        </Button>
-                                    )}
+                                    </div>
                                 </div>
                             </Card>
                         )

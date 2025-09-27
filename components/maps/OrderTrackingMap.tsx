@@ -5,16 +5,16 @@ import L from 'leaflet';
 import Button from '../ui/Button';
 import { MessageSquare, Check } from 'lucide-react';
 
-// Fix for default marker icon issue with webpack
-const iconPerson = new L.Icon({
-    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-    iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-    shadowSize: [41, 41]
+// FIX: Global fix for default Leaflet icon issue with webpack
+// This prevents Leaflet from trying to guess icon paths, which often break in module bundlers.
+// By setting the paths explicitly to a CDN, we ensure they always load correctly.
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
+
 
 const iconBusiness = new L.Icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
@@ -103,7 +103,7 @@ const OrderTrackingMap: React.FC<OrderTrackingMapProps> = ({
             </Marker>
         )}
         {clientLocation && (
-            <Marker position={[clientLocation.lat, clientLocation.lng]} icon={iconPerson}>
+            <Marker position={[clientLocation.lat, clientLocation.lng]}>
             <Popup>Tu ubicación de entrega</Popup>
             </Marker>
         )}

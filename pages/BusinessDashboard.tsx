@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Profile, Order, OrderStatus, UserRole } from '../types';
 import { APP_NAME, ORDER_STATUS_MAP } from '../constants';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
-import { Clock, Check, X, UtensilsCrossed } from 'lucide-react';
+import { Clock, Check, X, UtensilsCrossed, User, FileText } from 'lucide-react';
 import DashboardHeader from '../components/shared/DashboardHeader';
 import { notificationService } from '../services/notificationService';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
@@ -85,24 +84,42 @@ const OrderCard: React.FC<{ order: Order, onUpdateStatus: (id: string, status: O
     const statusInfo = ORDER_STATUS_MAP[order.status];
 
     return (
-        <Card className="p-4 mb-4">
-            <div className="flex justify-between items-center">
-                <h4 className="font-bold text-lg">Pedido #{order.id.slice(-6)}</h4>
+        <Card className="p-4 mb-4 flex flex-col">
+            <div className="flex justify-between items-start">
+                <div>
+                    <h4 className="font-bold text-lg">Pedido #{order.id.slice(-6)}</h4>
+                    <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        <User className="w-4 h-4 mr-1.5" />
+                        <span>{order.client?.name || 'Cliente Anónimo'}</span>
+                    </div>
+                </div>
                 <div className={`px-3 py-1 rounded-full text-white text-sm font-semibold ${statusInfo.color}`}>{statusInfo.text}</div>
             </div>
-             <p className="text-sm text-gray-500 dark:text-gray-400">De: {order.client?.name || 'Cliente'}</p>
-            <div className="my-3 border-t border-gray-200 dark:border-gray-700"></div>
-            <ul>
+            
+            <div className="border-t dark:border-gray-700 my-3"></div>
+            
+            <div className="space-y-1 text-sm flex-grow">
                 {order.items.map(item => (
-                    <li key={item.product.id} className="flex justify-between">
+                    <div key={item.product.id} className="flex justify-between">
                         <span>{item.quantity}x {item.product.name}</span>
-                        <span>${(item.product.price * item.quantity).toFixed(2)}</span>
-                    </li>
+                        <span className="font-medium">${(item.product.price * item.quantity).toFixed(2)}</span>
+                    </div>
                 ))}
-            </ul>
-             {order.special_notes && <p className="mt-2 p-2 bg-yellow-100 dark:bg-yellow-900 rounded text-sm"><b>Notas:</b> {order.special_notes}</p>}
-            <div className="my-3 border-t border-gray-200 dark:border-gray-700"></div>
-            <div className="flex justify-end font-bold text-lg">Total: ${order.total_price.toFixed(2)}</div>
+            </div>
+            
+            {order.special_notes && (
+                <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/50 rounded-lg text-sm flex items-start">
+                    <FileText className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
+                    <p><span className="font-semibold">Notas:</span> {order.special_notes}</p>
+                </div>
+            )}
+            
+            <div className="border-t dark:border-gray-700 my-3"></div>
+
+            <div className="flex justify-between items-baseline">
+                <span className="font-bold text-lg">Total:</span>
+                <span className="font-bold text-xl">${order.total_price.toFixed(2)}</span>
+            </div>
             
             {order.status === OrderStatus.PENDING && (
                 <div className="mt-4">

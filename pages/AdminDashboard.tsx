@@ -1,13 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-// FIX: Added imports for react-leaflet and leaflet to render the map, and removed unused OrderTrackingMap import.
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import { Profile, Order, OrderStatus, Location } from '../types';
+import { Profile, Order, OrderStatus } from '../types';
 import { APP_NAME, MOCK_USER_LOCATION } from '../constants';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
-// FIX: The 'Moped' icon does not exist in lucide-react, replaced with 'Bike'.
 import { Users, Bike, Briefcase, Activity } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -33,9 +31,34 @@ const MOCK_LIVE_ORDERS: Order[] = [
     }
 ];
 
+type AdminView = 'overview' | 'users' | 'businesses' | 'delivery';
+
+const StatsCard: React.FC<{ title: string; value: string; icon: React.ElementType }> = ({ title, value, icon: Icon }) => (
+    <Card className="p-4 flex items-center">
+        <div className="p-3 rounded-full bg-orange-100 dark:bg-orange-900 mr-4">
+            <Icon className="h-6 w-6 text-orange-500" />
+        </div>
+        <div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
+            <p className="text-2xl font-bold">{value}</p>
+        </div>
+    </Card>
+);
+
+const PlaceholderContent: React.FC<{ title: string }> = ({ title }) => (
+    <div className="p-8">
+        <h2 className="text-3xl font-bold mb-4">{title}</h2>
+        <Card className="p-8 text-center">
+            <p className="text-gray-500 dark:text-gray-400">Funcionalidad para {title.toLowerCase()} en construcción.</p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Esta sección estará disponible próximamente.</p>
+        </Card>
+    </div>
+);
+
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
     const [liveOrders, setLiveOrders] = useState(MOCK_LIVE_ORDERS);
+    const [currentView, setCurrentView] = useState<AdminView>('overview');
     
     // Simulate order updates
     useEffect(() => {
@@ -52,29 +75,80 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
         return () => clearInterval(interval);
     }, []);
 
-    const StatsCard: React.FC<{ title: string; value: string; icon: React.ElementType }> = ({ title, value, icon: Icon }) => (
-        <Card className="p-4 flex items-center">
-            <div className="p-3 rounded-full bg-orange-100 dark:bg-orange-900 mr-4">
-                <Icon className="h-6 w-6 text-orange-500" />
-            </div>
-            <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
-                <p className="text-2xl font-bold">{value}</p>
-            </div>
-        </Card>
-    );
+    const navItems = [
+        { id: 'overview', label: 'Vista General', icon: Activity },
+        { id: 'users', label: 'Usuarios', icon: Users },
+        { id: 'businesses', label: 'Negocios', icon: Briefcase },
+        { id: 'delivery', label: 'Repartidores', icon: Bike }
+    ];
+
+    const renderContent = () => {
+        switch (currentView) {
+            case 'users':
+                return <PlaceholderContent title="Gestión de Usuarios" />;
+            case 'businesses':
+                return <PlaceholderContent title="Gestión de Negocios" />;
+            case 'delivery':
+                return <PlaceholderContent title="Gestión de Repartidores" />;
+            case 'overview':
+            default:
+                return (
+                    <>
+                        <header className="p-4 flex-shrink-0">
+                             <h2 className="text-3xl font-bold">Vista Global en Tiempo Real</h2>
+                        </header>
+                        <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 flex-shrink-0">
+                            <StatsCard title="Pedidos Activos" value={liveOrders.length.toString()} icon={Activity}/>
+                            <StatsCard title="Clientes en Línea" value="1,204" icon={Users}/>
+                            <StatsCard title="Negocios Abiertos" value="23" icon={Briefcase}/>
+                            <StatsCard title="Repartidores Activos" value="47" icon={Bike}/>
+                        </div>
+                        <div className="flex-grow p-4 min-h-0">
+                            <Card className="w-full h-full overflow-hidden">
+                                <MapContainer center={[MOCK_USER_LOCATION.lat, MOCK_USER_LOCATION.lng]} zoom={12} scrollWheelZoom={true} className="w-full h-full">
+                                   <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                    {liveOrders.map(order => (
+                                        <React.Fragment key={order.id}>
+                                            {order.business && <Marker position={[order.business.location.lat, order.business.location.lng]} icon={new L.Icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', shadowSize: [41, 41]})}>
+                                                <Popup>{order.business.name}</Popup>
+                                            </Marker>}
+                                            {order.delivery_person && <Marker position={[order.delivery_person.location.lat, order.delivery_person.location.lng]} icon={new L.Icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', shadowSize: [41, 41]})}>
+                                                <Popup>{order.delivery_person.name}</Popup>
+                                            </Marker>}
+                                            <Marker position={[order.delivery_location.lat, order.delivery_location.lng]} icon={new L.Icon({iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png', shadowSize: [41, 41]})}>
+                                                <Popup>Cliente #{order.client_id.slice(-4)}</Popup>
+                                            </Marker>}
+                                        </React.Fragment>
+                                    ))}
+                                </MapContainer>
+                            </Card>
+                        </div>
+                    </>
+                );
+        }
+    }
     
     return (
         <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
-            <aside className="w-64 bg-white dark:bg-gray-800 shadow-lg p-4 flex flex-col">
+            <aside className="w-64 bg-white dark:bg-gray-800 shadow-lg p-4 flex flex-col flex-shrink-0">
                 <h1 className="text-2xl font-bold text-orange-500 mb-8">{APP_NAME} Admin</h1>
                 <nav className="flex-grow">
                     <ul>
-                        <li className="mb-2"><a href="#" className="flex items-center p-2 rounded-lg bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300 font-semibold"><Activity className="mr-3"/> Vista General</a></li>
-                        <li className="mb-2"><a href="#" className="flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"><Users className="mr-3"/> Usuarios</a></li>
-                        <li className="mb-2"><a href="#" className="flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"><Briefcase className="mr-3"/> Negocios</a></li>
-                        {/* FIX: The 'Moped' icon does not exist in lucide-react, replaced with 'Bike'. */}
-                        <li className="mb-2"><a href="#" className="flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"><Bike className="mr-3"/> Repartidores</a></li>
+                       {navItems.map(item => (
+                            <li key={item.id} className="mb-2">
+                                <button
+                                    onClick={() => setCurrentView(item.id as AdminView)}
+                                    className={`w-full flex items-center p-2 rounded-lg text-left transition-colors duration-200 ${
+                                        currentView === item.id
+                                            ? 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300 font-semibold'
+                                            : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    }`}
+                                >
+                                    <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                                    <span>{item.label}</span>
+                                </button>
+                            </li>
+                        ))}
                     </ul>
                 </nav>
                 <div>
@@ -82,37 +156,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
                      <Button onClick={onLogout} variant="secondary" className="w-full mt-2">Cerrar Sesión</Button>
                 </div>
             </aside>
-            <main className="flex-1 flex flex-col">
-                <header className="p-4">
-                     <h2 className="text-3xl font-bold">Vista Global en Tiempo Real</h2>
-                </header>
-                <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StatsCard title="Pedidos Activos" value={liveOrders.length.toString()} icon={Activity}/>
-                    <StatsCard title="Clientes en Línea" value="1,204" icon={Users}/>
-                    <StatsCard title="Negocios Abiertos" value="23" icon={Briefcase}/>
-                    {/* FIX: The 'Moped' icon does not exist in lucide-react, replaced with 'Bike'. */}
-                    <StatsCard title="Repartidores Activos" value="47" icon={Bike}/>
-                </div>
-                <div className="flex-grow p-4">
-                    <Card className="w-full h-full overflow-hidden">
-                        <MapContainer center={[MOCK_USER_LOCATION.lat, MOCK_USER_LOCATION.lng]} zoom={12} scrollWheelZoom={true} className="w-full h-full">
-                           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                            {liveOrders.map(order => (
-                                <React.Fragment key={order.id}>
-                                    {order.business && <Marker position={[order.business.location.lat, order.business.location.lng]} icon={new L.Icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', shadowSize: [41, 41]})}>
-                                        <Popup>{order.business.name}</Popup>
-                                    </Marker>}
-                                    {order.delivery_person && <Marker position={[order.delivery_person.location.lat, order.delivery_person.location.lng]} icon={new L.Icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', shadowSize: [41, 41]})}>
-                                        <Popup>{order.delivery_person.name}</Popup>
-                                    </Marker>}
-                                    <Marker position={[order.delivery_location.lat, order.delivery_location.lng]} icon={new L.Icon({iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png', shadowSize: [41, 41]})}>
-                                        <Popup>Cliente #{order.client_id.slice(-4)}</Popup>
-                                    </Marker>}
-                                </React.Fragment>
-                            ))}
-                        </MapContainer>
-                    </Card>
-                </div>
+            <main className="flex-1 flex flex-col overflow-y-auto">
+                {renderContent()}
             </main>
         </div>
     );
