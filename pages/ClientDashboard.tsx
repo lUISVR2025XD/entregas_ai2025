@@ -1,11 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
-import { Profile, Order, OrderStatus, CartItem, Business, Location, Product, UserRole, FilterState, Notification } from '../types';
+import { Profile, Order, OrderStatus, CartItem, Business, Location, Product, UserRole, Notification } from '../types';
 import OrderTrackingMap from '../components/maps/OrderTrackingMap';
 import { APP_NAME, ORDER_STATUS_MAP, MOCK_USER_LOCATION, QUICK_MESSAGES_CLIENT } from '../constants';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import StarRating from '../components/ui/StarRating';
-import { MapPin, Bike, Clock, CheckCircle, Search, Frown, ShoppingBag, Check, ClipboardList, MessageSquare, ThumbsUp, UtensilsCrossed, PackageCheck } from 'lucide-react';
+import { MapPin, Bike, Clock, CheckCircle, Search, Frown, ShoppingBag, Check, ClipboardList, MessageSquare, ThumbsUp, UtensilsCrossed, PackageCheck, XCircle } from 'lucide-react';
 import DashboardHeader from '../components/shared/DashboardHeader';
 import ShoppingCart from '../components/client/ShoppingCart';
 import BusinessCard from '../components/client/BusinessCard';
@@ -14,6 +15,7 @@ import { notificationService } from '../services/notificationService';
 import BusinessDetailPage from './BusinessDetailPage';
 import BusinessFilters from '../components/client/BusinessFilters';
 import OrderHistoryPage from './OrderHistoryPage';
+import { FilterState } from '../types';
 
 // Mock API call from HomePage
 const fetchNearbyBusinesses = async (location: Location): Promise<Business[]> => {
@@ -186,28 +188,29 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user, onLogout }) => 
                 newStatus = OrderStatus.IN_PREPARATION;
             } else if (notification.title === '¡Tu pedido está en camino!') {
                 newStatus = OrderStatus.ON_THE_WAY;
+            } else if (notification.title === 'Pedido Rechazado') {
+                newStatus = OrderStatus.REJECTED;
+            } else if (notification.title === '¡Pedido Entregado!') {
+                newStatus = OrderStatus.DELIVERED;
             }
 
             if (newStatus) {
                 setPastOrders(currentOrders => {
                     const orderIndex = currentOrders.findIndex(o => o.id === notification.orderId);
-                    if (orderIndex === -1) {
-                        return currentOrders; // Order not found, no change
-                    }
-
-                    const updatedOrder = { ...currentOrders[orderIndex], status: newStatus as OrderStatus };
-
-                    // This is the core logic for the user's request.
-                    // When the order is on its way, we set it as the active order
-                    // and switch the view to tracking.
-                    if (newStatus === OrderStatus.ON_THE_WAY) {
-                        setActiveOrder(updatedOrder);
-                        setDeliveryLocation(updatedOrder.business?.location); // Start delivery person at the business
-                        setCurrentView('tracking');
-                    }
+                    if (orderIndex === -1) return currentOrders;
                     
+                    const updatedOrder = { ...currentOrders[orderIndex], status: newStatus as OrderStatus };
                     const newOrders = [...currentOrders];
                     newOrders[orderIndex] = updatedOrder;
+
+                    if (newStatus === OrderStatus.ON_THE_WAY) {
+                        setActiveOrder(updatedOrder);
+                        setDeliveryLocation(updatedOrder.business?.location); 
+                        setCurrentView('tracking');
+                    } else if (activeOrder && activeOrder.id === updatedOrder.id) {
+                        setActiveOrder(updatedOrder);
+                    }
+                    
                     return newOrders;
                 });
             }
@@ -215,7 +218,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user, onLogout }) => 
 
         const unsubscribe = notificationService.subscribe(handleNotification);
         return () => unsubscribe();
-    }, [user.role]);
+    }, [user.role, activeOrder]);
 
 
     const handleRateOrder = () => {
@@ -279,6 +282,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user, onLogout }) => 
         const newOrder: Order = {
             id: `order-${Date.now()}`,
             client_id: user.id,
+            client: user,
             business_id: cartBusiness.id,
             business: cartBusiness,
             items: cart,
@@ -297,6 +301,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user, onLogout }) => 
             id: `note-new-order-${Date.now()}`,
             role: UserRole.BUSINESS,
             orderId: newOrder.id,
+            order: newOrder,
             title: '¡Nuevo Pedido!',
             message: `Has recibido un nuevo pedido de ${user.name}.`,
             type: 'new_order',
@@ -380,44 +385,55 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user, onLogout }) => 
         const currentStepIndex = getStepIndex(activeOrder.status);
 
         return (
-             <Card className="p-6">
+             <Card className="p-6 bg-white/10 border border-white/20">
                 <div className="flex justify-between items-start mb-6">
                     <div>
-                        <h3 className="text-2xl font-bold">Tu pedido de <span className="text-orange-500">{activeOrder.business?.name}</span></h3>
-                        <p className="text-gray-500 dark:text-gray-400">ID del Pedido: {activeOrder.id.slice(-6)}</p>
+                        <h3 className="text-2xl font-bold">Tu pedido de <span className="text-purple-400">{activeOrder.business?.name}</span></h3>
+                        <p className="text-gray-400">ID del Pedido: {activeOrder.id.slice(-6)}</p>
                     </div>
                     <div className={`px-4 py-2 rounded-full text-white font-semibold ${statusInfo.color}`}>{statusInfo.text}</div>
                 </div>
-
-                {/* Stepper */}
-                <div className="flex items-center mb-6">
-                    {steps.map((step, index) => (
-                        <React.Fragment key={step.status}>
-                            <div className="flex flex-col items-center text-center">
-                                <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${index <= currentStepIndex ? 'bg-orange-500 text-white border-orange-500' : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-500 text-gray-400 dark:text-gray-500'}`}>
-                                    <step.icon size={24} />
-                                </div>
-                                <p className={`mt-2 w-20 text-xs sm:text-sm font-medium transition-colors duration-300 ${index <= currentStepIndex ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'}`}>{step.label}</p>
-                            </div>
-                            {index < steps.length - 1 && (
-                                <div className={`flex-1 h-1 mx-1 sm:mx-2 transition-colors duration-500 ${index < currentStepIndex ? 'bg-orange-500' : 'bg-gray-200 dark:bg-gray-700'}`}></div>
-                            )}
-                        </React.Fragment>
-                    ))}
-                </div>
                 
-                 {activeOrder.status === OrderStatus.DELIVERED && (
-                     <div className="mt-8 bg-green-100 dark:bg-green-900 border border-green-400 dark:border-green-600 rounded-lg p-6 text-center">
-                         <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400 mx-auto mb-4" />
-                         <h4 className="text-2xl font-bold text-green-800 dark:text-green-200">¡Tu pedido ha sido entregado!</h4>
-                         <p className="text-gray-600 dark:text-gray-300 mt-2 mb-6">Por favor, califica tu experiencia.</p>
-                         <div className="flex flex-col items-center space-y-4">
-                            <div><p className="font-semibold mb-1">Calificar a {activeOrder.business?.name}</p><StarRating rating={0} setRating={() => {}} size={28}/></div>
-                             <div><p className="font-semibold mb-1">Calificar a {activeOrder.delivery_person?.name}</p><StarRating rating={0} setRating={() => {}} size={28}/></div>
-                         </div>
-                         <Button onClick={handleRateOrder} className="mt-6 w-full md:w-auto">Enviar Calificación</Button>
+                {activeOrder.status === OrderStatus.REJECTED ? (
+                     <div className="mt-8 bg-red-500/10 border border-red-500/30 rounded-lg p-6 text-center">
+                         <XCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                         <h4 className="text-2xl font-bold text-red-200">Pedido Rechazado</h4>
+                         <p className="text-gray-300 mt-2 mb-6">Lo sentimos, el negocio no pudo aceptar tu pedido en este momento. No se ha realizado ningún cargo.</p>
+                         <Button onClick={() => { setActiveOrder(null); setCurrentView('shopping'); }} className="mt-6 w-full md:w-auto bg-purple-600 hover:bg-purple-700">Volver a Restaurantes</Button>
                      </div>
-                 )}
+                ) : (
+                    <>
+                    {/* Stepper */}
+                    <div className="flex items-center mb-6">
+                        {steps.map((step, index) => (
+                            <React.Fragment key={step.status}>
+                                <div className="flex flex-col items-center text-center">
+                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${index <= currentStepIndex ? 'bg-purple-500 text-white border-purple-500' : 'bg-white/10 border-white/20 text-gray-400'}`}>
+                                        <step.icon size={24} />
+                                    </div>
+                                    <p className={`mt-2 w-20 text-xs sm:text-sm font-medium transition-colors duration-300 ${index <= currentStepIndex ? 'text-gray-100' : 'text-gray-500'}`}>{step.label}</p>
+                                </div>
+                                {index < steps.length - 1 && (
+                                    <div className={`flex-1 h-1 mx-1 sm:mx-2 transition-colors duration-500 ${index < currentStepIndex ? 'bg-purple-500' : 'bg-white/10'}`}></div>
+                                )}
+                            </React.Fragment>
+                        ))}
+                    </div>
+                    
+                    {activeOrder.status === OrderStatus.DELIVERED && (
+                        <div className="mt-8 bg-green-500/10 border border-green-500/30 rounded-lg p-6 text-center">
+                            <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
+                            <h4 className="text-2xl font-bold text-green-200">¡Tu pedido ha sido entregado!</h4>
+                            <p className="text-gray-300 mt-2 mb-6">Por favor, califica tu experiencia.</p>
+                            <div className="flex flex-col items-center space-y-4">
+                                <div><p className="font-semibold mb-1">Calificar a {activeOrder.business?.name}</p><StarRating rating={0} setRating={() => {}} size={28}/></div>
+                                <div><p className="font-semibold mb-1">Calificar a {activeOrder.delivery_person?.name}</p><StarRating rating={0} setRating={() => {}} size={28}/></div>
+                            </div>
+                            <Button onClick={handleRateOrder} className="mt-6 w-full md:w-auto bg-purple-600 hover:bg-purple-700">Enviar Calificación</Button>
+                        </div>
+                    )}
+                    </>
+                )}
             </Card>
         );
     };
@@ -428,7 +444,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user, onLogout }) => 
                 return (
                     <main className="p-4 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 flex-grow">
                         <div className="lg:col-span-2">
-                            <Card className="overflow-hidden h-full">
+                            <Card className="overflow-hidden h-full bg-transparent border-none p-0">
                                <OrderTrackingMap 
                                     center={activeOrder?.delivery_location || user.location!}
                                     clientLocation={activeOrder?.delivery_location}
@@ -455,9 +471,9 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user, onLogout }) => 
                  return (
                     <div className="container mx-auto p-4 md:p-8">
                         <div className="relative mb-4 max-w-2xl mx-auto">
-                            <input type="text" placeholder="Busca tu restaurante favorito..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full p-4 pl-12 border dark:border-gray-600 rounded-full bg-white dark:bg-gray-700 text-lg shadow-sm focus:ring-2 focus:ring-orange-500 focus:outline-none"/>
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-gray-400" />
+                            <input type="text" placeholder="Busca tu restaurante o platillo favo..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full p-4 pl-12 border-none rounded-lg bg-white/20 text-white placeholder-gray-300 text-lg focus:ring-2 focus:ring-purple-400 focus:outline-none"/>
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-gray-300" />
                         </div>
                          <BusinessFilters
                             businesses={businesses}
@@ -466,7 +482,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user, onLogout }) => 
                             onClearFilters={handleClearFilters}
                         />
                         <main>
-                            <h2 className="text-3xl font-bold mb-6 text-gray-700 dark:text-gray-200">Restaurantes</h2>
+                            <h2 className="text-3xl font-bold mb-6">Restaurantes</h2>
                              {loading ? (
                                 <p>Cargando negocios...</p>
                             ) : filteredBusinesses.length > 0 ? (
@@ -499,7 +515,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user, onLogout }) => 
     }
 
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col bg-[#1A0129]">
              <DashboardHeader 
                 userName={user.name} 
                 onLogout={onLogout} 

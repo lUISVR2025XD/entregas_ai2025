@@ -1,7 +1,6 @@
-
 import { OrderStatus, UserRole } from './types';
 
-export const APP_NAME = "Pronto Eats";
+export const APP_NAME = "vrtelolleva";
 
 export const USER_ROLES = [
   { id: UserRole.CLIENT, name: 'Cliente' },

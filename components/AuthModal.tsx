@@ -49,12 +49,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ onLoginSuccess, onClose }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full relative transform transition-all duration-300">
-                <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+            <div className="bg-[#2C0054] border-2 border-purple-800 rounded-2xl shadow-2xl p-8 max-w-md w-full relative transform transition-all duration-300">
+                <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10">
                     <X className="h-6 w-6" />
                 </button>
-                <h2 className="text-3xl font-bold text-center text-gray-800 dark:text-white mb-4">
+                <h2 className="text-3xl font-bold text-center text-white mb-4">
                     {isLoginMode ? 'Iniciar Sesión' : 'Crear Cuenta'}
                 </h2>
 
@@ -68,7 +68,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onLoginSuccess, onClose }) => {
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 required
-                                className="w-full p-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                                className="w-full p-3 pl-10 border border-white/20 rounded-lg bg-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
                             />
                         </div>
                     )}
@@ -80,7 +80,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onLoginSuccess, onClose }) => {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="w-full p-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                            className="w-full p-3 pl-10 border border-white/20 rounded-lg bg-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
                         />
                     </div>
                     <div className="relative">
@@ -91,13 +91,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ onLoginSuccess, onClose }) => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="w-full p-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                            className="w-full p-3 pl-10 border border-white/20 rounded-lg bg-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
                         />
                     </div>
                     
                     {!isLoginMode && (
                         <div>
-                             <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">Selecciona tu rol:</p>
+                             <p className="text-sm text-gray-300 mb-2">Selecciona tu rol:</p>
                              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                                  {USER_ROLES.filter(r => r.id !== UserRole.ADMIN).map(r => {
                                      const Icon = ICONS[r.id];
@@ -106,7 +106,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onLoginSuccess, onClose }) => {
                                             key={r.id} 
                                             type="button"
                                             onClick={() => setRole(r.id)}
-                                            className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-colors ${role === r.id ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/50' : 'border-gray-300 dark:border-gray-600 hover:border-orange-400'}`}
+                                            className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-colors ${role === r.id ? 'border-purple-500 bg-purple-900/50' : 'border-white/20 hover:border-purple-400'}`}
                                         >
                                             {Icon && <Icon className="h-6 w-6 mb-1" />}
                                             <span className="text-sm font-semibold">{r.name}</span>
@@ -119,14 +119,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ onLoginSuccess, onClose }) => {
 
                     {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
-                    <Button type="submit" className="w-full text-lg py-3" disabled={isLoading}>
+                    <Button type="submit" className="w-full text-lg py-3 bg-purple-600 hover:bg-purple-700" disabled={isLoading}>
                         {isLoading ? 'Cargando...' : (isLoginMode ? 'Ingresar' : 'Registrarse')}
                     </Button>
                 </form>
 
-                <p className="text-center mt-6 text-sm">
+                <p className="text-center mt-6 text-sm text-gray-300">
                     {isLoginMode ? "¿No tienes una cuenta?" : "¿Ya tienes una cuenta?"}
-                    <button onClick={() => { setIsLoginMode(!isLoginMode); setError(null); }} className="font-semibold text-orange-500 hover:underline ml-1">
+                    <button onClick={() => { setIsLoginMode(!isLoginMode); setError(null); }} className="font-semibold text-purple-400 hover:underline ml-1">
                         {isLoginMode ? 'Regístrate' : 'Inicia Sesión'}
                     </button>
                 </p>

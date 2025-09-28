@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Business, Product } from '../types';
 import Card from '../components/ui/Card';
@@ -21,7 +20,7 @@ const MOCK_REVIEWS = [
 
 const BusinessDetailPage: React.FC<BusinessDetailPageProps> = ({ business, onAddToCart, onGoBack }) => {
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in bg-[#1A0129] min-h-full">
         <div className="container mx-auto p-4 md:p-8">
             <Button onClick={onGoBack} variant="secondary" className="mb-6 flex items-center">
                 <ChevronLeft className="w-5 h-5 mr-2" />
@@ -29,18 +28,18 @@ const BusinessDetailPage: React.FC<BusinessDetailPageProps> = ({ business, onAdd
             </Button>
 
             {/* Business Header */}
-            <Card className="mb-8 overflow-hidden">
+            <Card className="mb-8 overflow-hidden bg-transparent p-0 border-none">
                 <div className="relative">
-                    <img src={`https://picsum.photos/seed/${business.id}/1200/400`} alt={business.name} className="w-full h-64 object-cover"/>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    <img src={`https://picsum.photos/seed/${business.id}/1200/400`} alt={business.name} className="w-full h-64 object-cover rounded-t-lg"/>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                     <div className="absolute bottom-0 left-0 p-6">
                         <h1 className="text-4xl font-extrabold text-white">{business.name}</h1>
                         <p className="text-lg text-gray-200">{business.category}</p>
                     </div>
                 </div>
-                <div className="p-4 bg-gray-50 dark:bg-gray-700/50 flex flex-wrap items-center justify-around text-sm">
-                    <div className="flex items-center m-2"><Star className="w-5 h-5 text-yellow-400 fill-yellow-400 mr-2" /> <span className="font-bold">{business.rating}</span> <span className="text-gray-500 dark:text-gray-400 ml-1"> (100+ opiniones)</span></div>
-                    <div className="flex items-center m-2"><ClockIcon className="w-5 h-5 text-gray-600 dark:text-gray-300 mr-2" /> <span>{business.delivery_time}</span></div>
+                <div className="p-4 bg-white/5 flex flex-wrap items-center justify-around text-sm rounded-b-lg">
+                    <div className="flex items-center m-2"><Star className="w-5 h-5 text-yellow-400 fill-yellow-400 mr-2" /> <span className="font-bold">{business.rating}</span> <span className="text-gray-400 ml-1"> (100+)</span></div>
+                    <div className="flex items-center m-2"><ClockIcon className="w-5 h-5 text-gray-300 mr-2" /> <span>{business.delivery_time}</span></div>
                     <div className="flex items-center m-2 font-semibold"><span>Envío: ${business.delivery_fee.toFixed(2)}</span></div>
                      {!business.is_open && <div className="m-2 px-3 py-1 bg-red-600 text-white rounded-full font-bold text-xs">CERRADO</div>}
                 </div>
@@ -64,25 +63,25 @@ const BusinessDetailPage: React.FC<BusinessDetailPageProps> = ({ business, onAdd
 
                 {/* Info & Reviews Column */}
                 <div className="lg:col-span-1 space-y-8">
-                    <Card className="p-6">
+                    <Card className="p-6 bg-white/10 border border-white/20">
                          <h3 className="text-2xl font-bold mb-4">Información</h3>
-                         <ul className="space-y-3 text-gray-600 dark:text-gray-300">
-                             <li className="flex items-start"><MapPin className="w-5 h-5 mr-3 mt-1 flex-shrink-0 text-orange-500"/> <span>{business.address}</span></li>
-                             <li className="flex items-center"><Phone className="w-5 h-5 mr-3 flex-shrink-0 text-orange-500"/> <span>{business.phone}</span></li>
-                             <li className="flex items-start"><ClockIcon className="w-5 h-5 mr-3 mt-1 flex-shrink-0 text-orange-500"/> <span>Lunes a Sábado: 11:00 - 22:00<br/>Domingo: 12:00 - 20:00</span></li>
+                         <ul className="space-y-3 text-gray-300">
+                             <li className="flex items-start"><MapPin className="w-5 h-5 mr-3 mt-1 flex-shrink-0 text-purple-400"/> <span>{business.address}</span></li>
+                             <li className="flex items-center"><Phone className="w-5 h-5 mr-3 flex-shrink-0 text-purple-400"/> <span>{business.phone}</span></li>
+                             <li className="flex items-start"><ClockIcon className="w-5 h-5 mr-3 mt-1 flex-shrink-0 text-purple-400"/> <span>L-S: 11:00-22:00<br/>D: 12:00-20:00</span></li>
                          </ul>
                     </Card>
 
-                     <Card className="p-6">
+                     <Card className="p-6 bg-white/10 border border-white/20">
                          <h3 className="text-2xl font-bold mb-4">Opiniones</h3>
                          <ul className="space-y-4">
                              {MOCK_REVIEWS.map(review => (
-                                 <li key={review.id} className="border-b dark:border-gray-700 pb-3 last:border-b-0">
+                                 <li key={review.id} className="border-b border-white/10 pb-3 last:border-b-0">
                                      <div className="flex justify-between items-center mb-1">
                                          <p className="font-semibold">{review.author}</p>
                                          <StarRating rating={review.rating} size={16} />
                                      </div>
-                                     <p className="text-gray-600 dark:text-gray-400 text-sm">{review.comment}</p>
+                                     <p className="text-gray-400 text-sm">{review.comment}</p>
                                  </li>
                              ))}
                          </ul>

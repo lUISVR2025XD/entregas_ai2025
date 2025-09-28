@@ -29,14 +29,14 @@ const OrderHistoryPage: React.FC<OrderHistoryPageProps> = ({ orders, onTrackOrde
                 Volver a Restaurantes
             </Button>
             
-            <h2 className="text-3xl font-bold mb-6 text-gray-700 dark:text-gray-200">Historial de Pedidos</h2>
+            <h2 className="text-3xl font-bold mb-6">Historial de Pedidos</h2>
 
             {orders.length > 0 ? (
                 <div className="space-y-6">
                     {orders.map(order => {
                         const statusInfo = ORDER_STATUS_MAP[order.status];
                         return (
-                             <Card key={order.id} className="overflow-hidden shadow-md transition-shadow hover:shadow-lg flex flex-col sm:flex-row">
+                             <Card key={order.id} className="overflow-hidden bg-white/10 border border-white/20 transition-shadow hover:shadow-lg flex flex-col sm:flex-row">
                                 {order.business?.image && (
                                     <img src={order.business.image} alt={order.business.name} className="w-full sm:w-40 h-40 sm:h-auto object-cover" />
                                 )}
@@ -44,21 +44,21 @@ const OrderHistoryPage: React.FC<OrderHistoryPageProps> = ({ orders, onTrackOrde
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
                                             <h3 className="text-xl font-bold">{order.business?.name}</h3>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            <p className="text-sm text-gray-400">
                                                 {new Date(order.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}
                                             </p>
                                         </div>
                                         <span className={`px-3 py-1 rounded-full text-white text-xs font-semibold ${statusInfo.color}`}>{statusInfo.text}</span>
                                     </div>
                                     
-                                    <div className="flex justify-between items-baseline border-t dark:border-gray-700 pt-2 mt-2">
-                                        <span className="text-sm text-gray-500 dark:text-gray-400">ID: #{order.id.slice(-6)}</span>
+                                    <div className="flex justify-between items-baseline border-t border-white/10 pt-2 mt-2">
+                                        <span className="text-sm text-gray-400">ID: #{order.id.slice(-6)}</span>
                                         <span className="text-lg font-bold">Total: ${order.total_price.toFixed(2)}</span>
                                     </div>
                                     
-                                    <div className="mt-4 pt-4 border-t dark:border-gray-700 flex flex-col sm:flex-row gap-2 sm:justify-end">
+                                    <div className="mt-4 pt-4 border-t border-white/10 flex flex-col sm:flex-row gap-2 sm:justify-end">
                                         {isTrackable(order.status) ? (
-                                            <Button onClick={() => onTrackOrder(order)} className="w-full sm:w-auto">
+                                            <Button onClick={() => onTrackOrder(order)} className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700">
                                                 Seguir Pedido
                                             </Button>
                                         ) : (
@@ -77,7 +77,7 @@ const OrderHistoryPage: React.FC<OrderHistoryPageProps> = ({ orders, onTrackOrde
                     })}
                 </div>
             ) : (
-                <p className="text-gray-500 dark:text-gray-400 text-center py-10">No has realizado ningún pedido todavía.</p>
+                <p className="text-gray-400 text-center py-10">No has realizado ningún pedido todavía.</p>
             )}
         </div>
     );

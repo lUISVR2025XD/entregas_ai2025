@@ -120,6 +120,7 @@ export interface Notification {
   message: string;
   role: UserRole;
   orderId?: string;
+  order?: Order;
   type: 'info' | 'success' | 'warning' | 'error' | 'new_order';
   icon?: React.ElementType;
 }
